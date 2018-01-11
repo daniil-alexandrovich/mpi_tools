@@ -1,6 +1,6 @@
 '''
 PortfolioUpdater manipulates portfolio data and writes it, properly
-formatted fro Stylus, to a .xlsx file.
+formatted for Stylus, to a .xlsx file.
 
 Uses a pandas DataFrame object to generate portfolios consisting of the
 following data for each underlying fund:
