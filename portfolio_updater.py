@@ -27,6 +27,7 @@ import  pandas  as pd
 import openpyxl as xl
 import    os
 import    re
+import    sys
 import datetime
 
 class PortfolioUpdater:
@@ -60,10 +61,10 @@ class PortfolioUpdater:
               3+. Date (datetime.datetime object)
         """
         filename = os.path.join(path, filename) if path else filename
+        sheet = xl.load_workbook(filename)[sheetname]
         if stylus_formatted:
             # Sheet metadata (MPI_ASSETIDRANGE, MPI_REBALANCE, etc.) is stored
             # and passed through to the output file.
-            sheet = xl.load_workbook(filename)[sheetname]
             metadata, cellrange = self.get_metadata(sheet)
             portfolio = self.get_portfolio(sheet, cellrange)
             df = pd.DataFrame(portfolio)
@@ -73,9 +74,25 @@ class PortfolioUpdater:
             df.set_index('ID', inplace=True)
             return df, metadata
         else:
-            return pd.read_excel(filename, sheetname=sheetname, index_col=0)
+            # Case where no metadata is provided.
+            if sheet[1][0].value == 'ID':
+                df = pd.read_excel(filename, sheetname=sheetname, index_col=0)
+                metadata = None
+            # Case where metadata is provided.
+            else:
+                df = pd.read_excel(filename, sheetname=sheetname, skiprows=[0,1], index_col=0)
+                metadata = {}
+                for key, value in zip(sheet['1'], sheet['2']):
+                    if key.value:
+                        metadata[key.value] = value.value
+            return df, metadata
+            
 
     def add_dates(self, portfolio, additions):
+        # Name parameters:
+            # f(self,*, x, y...)
+            # x = f(y=yval, x=xval..)
+            
         '''Outer merges two portfolio objects while retaining indexing by ID.
         
         The outer merge process creates rows in <portfolio> for entries in
@@ -105,13 +122,13 @@ class PortfolioUpdater:
         return pd.concat([portfolio.iloc[:,:2], dates_sorted], axis=1)
         
     
-    def write(self, portfolio, filename, sheet, metadata=None):
+    def write(self, portfolio, metadata, filename, sheet):
         '''Writes an Advanced Portfolio to a Stylus-formatted Excel sheet.
         
         The output worksheet is written the first two rows set aside for
         metadata and portfolio contents from row 5 onwards. Dates occupy row 4.
         '''
-        metadata = self.update_metadata(portfolio, metadata)
+#        metadata = self.update_metadata(portfolio, metadata, joined_metadata)
         out_book = xl.load_workbook(filename=filename)
         output = out_book[sheet]
         # Metadata is written to first two rows.        
@@ -169,43 +186,56 @@ class PortfolioUpdater:
             portfolio.append(values)
         return portfolio
     
-    def update_metadata(self, portfolio, metadata):
+    def update_metadata(self, portfolio, metadata, joined_metadata=None):
         '''Updates existing metadata to reflect a portfolio's new cell ranges
         
         If None is passed, new metadata for the portfolio is generated.
         '''
         if not metadata:
             metadata = {}
+        if 'MPI_Rebalance' not in metadata:
             metadata['MPI_Rebalance'] = 'Monthly'
-            metadata['MPI_PORTFOLIOTYPE'] = 'Advanced'
-        # Metadata is overwritten in order to accomodate for added rows or columns.
+        metadata['MPI_PORTFOLIOTYPE'] = 'Advanced'
+        # Existing metadata is overwritten in order to accomodate for added rows or columns.
         last_row = len(portfolio) + 4
         last_col = xl.utils.get_column_letter(len(portfolio.axes[1])+1)
         metadata['MPI_ASSETIDRANGE'] = 'A5:A'+str(last_row)
         metadata['MPI_LABELRANGE'] = 'B5:B'+str(last_row)
         metadata['MPI_ASSETDBIDRANGE'] = 'C5:C'+str(last_row)
         metadata['MPI_PORTFOLIODATERANGE'] = 'D4:'+last_col+'4'
+        # Metadata from portfolio second portfolio is added to existing metadata.
+        if joined_metadata:
+            for key in joined_metadata:
+                if key not in metadata:
+                    metadata[key] = joined_metadata[key]
         return metadata
+    
+    def run(self, file, sheet, stylus_formatted, out_file, out_sheet, existing_file=None, existing_sheet=None, existing_stylus_formatted=None):
+        print('\nLibraries loaded.')
+        data, meta = self.load(file, sheet, stylus_formatted=stylus_formatted)
+        print('Data imported from '+file+'.')
+        if existing_file:
+            existing_data, existing_meta = self.load(existing_file, existing_sheet, stylus_formatted=existing_stylus_formatted)
+            print('Data imported from '+existing_file+'.')
+            data = self.add_dates(existing_data, data)
+            meta = self.update_metadata(data, existing_meta, meta)
+            print('Data merged.')
+        else:
+            meta = self.update_metadata(data, meta)
+        self.write(data, meta, out_file, out_sheet)
+        print('Data from exported to '+out_file+'.')    
 
 if __name__ == '__main__':
-    # Load class
+    print()
+    if len(sys.argv) not in [5,7]:
+        print('Please pass either 4 or 6 parameters!')
+        sys.exit(0)
     pu = PortfolioUpdater()
+    if len(sys.argv) == 5:
+        stylus_formatted = False if int(input('Is '+sys.argv[1]+' Stylus-formatted? (0 for No, 1 for Yes) >> ')) == 0 else True
+        pu.run(sys.argv[1], sys.argv[2], stylus_formatted, sys.argv[3], sys.argv[4])
+    elif len(sys.argv) == 7:
+        stylus_formatted = False if int(input('Is '+sys.argv[1]+' Stylus-formatted? (0 for No, 1 for Yes) >> ')) == 0 else True
+        existing_stylus_formatted = False if int(input('Is '+sys.argv[5]+' Stylus-formatted? (0 for No, 1 for Yes) >> ')) == 0 else True
+        pu.run(sys.argv[1], sys.argv[2], stylus_formatted, sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], existing_stylus_formatted)
     
-    # Stylus-formatted sheet
-    file_stylus = 'stylusformat.xlsx'
-    sheet_stylus = 'Advanced'
-    
-    # Non-stylus-formatted sheet
-    file_noformat = 'in.xlsx'
-    sheet_noformat = 'in'
-    
-    # Import Excel files
-    noformat = pu.load(file_noformat, sheet_noformat)
-    stylus, meta = pu.load(file_stylus, sheet_stylus, stylus_formatted=True)
-    
-    # Join portfolios
-    joined = pu.add_dates(stylus, noformat)
-    
-    # Export to Excel
-    pu.write(joined, 'out.xlsx', 'join', metadata=meta)
-    pu.write(noformat, 'out.xlsx', 'format', metadata=meta)

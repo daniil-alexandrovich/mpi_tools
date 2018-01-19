@@ -1,13 +1,37 @@
+TODO: ADD OVERWRITE SHEET FUNCTIONALITY
+TODO: Make the main function way more Pythonic
+TODO: Convert to named variables where it would help readability
+
 Uses pandas and openpyxl libraries.
 
-Run portfolio_updater.py to test script.
+This is a command line tool that takes the following parameters:
 
-This tool has the capacity to generate and manipulate a portfolio as well as
-write it out to an Excel Sheet, properly formatted. The test script writes two
-portfolios to sheets in out.xlsx:
+	portfolio_updater.py input_file input_sheet output_file output_sheet [existing_file existing_sheet]
 
-	* join: Joins unformatted data to a previously existing Stylus portfolio
-	* format: Formats unformatted data as a standalone Stylus portfolio
+...which are defined as follows:
+
+	* input_file: Filename or path of portfolio containing data to be
+	   added to a Stylus portfolio.
+	* input_sheet: Worksheet name within this file containing appropriate
+	   data
+
+	* output_file: Filename or path of Excel sheet to which the Stylus-
+  	   formatted portfolio will be written.
+	* output_sheet: Worksheet name within this file to which the formatted
+   	   data is written. Must exist, for now.
+
+	* existing_file: Filename or path of an optional Excel file to merge data
+	   from input_file into.
+	* existing_sheet: Sheet containing relevant data in this file.
+
+
+Example files can be used as follows:
+
+	portfolio_updater.py in.xlsx in out.xlsx format
+	* Generates a Stylus portfolio from in.xlsx
+
+	portfolio_updater.py in.xlsx in out.xlsx join stylusformat.xlsx portfolio
+	* Adds data from in.xlsx to existing portfolio data in stylusformat.xlsx
 
 Eventually, this tool may be used to create and edit portfolios from scratch.
 
