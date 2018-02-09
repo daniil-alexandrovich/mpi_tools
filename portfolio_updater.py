@@ -12,7 +12,7 @@ following data for each underlying fund:
     *   Date 2   - Weight of asset at Date 2
     *    ...
 
-TODO: Future Methods for Manual Adjustments:
+Potential Future Methods for manual adjustments:
     - new(): create new portfolio
     - add_fund(portfolio, id, label, dbid): add fund to portfolio
     - add_date(portfolio, date): add date
@@ -52,7 +52,6 @@ class PortfolioUpdater:
                 portfolio, it is parsed and read from accordingly.
         
         Returns:
-          TODO: DEVELOP PORTFOLIO CLASS RATHER THAN DATAFRAME OBJECT
           A DataFrame with the following column order:
               
               0: (Index) ID
