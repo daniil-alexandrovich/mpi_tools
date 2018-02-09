@@ -1,8 +1,21 @@
-TODO: ADD OVERWRITE SHEET FUNCTIONALITY
-TODO: Make the main function way more Pythonic
-TODO: Convert to named variables where it would help readability
+-------------------------
+- PORTFOLIO UPDATE TOOL -
+-------------------------
 
-Uses pandas and openpyxl libraries.
+
+-------------------
+- Getting Started -
+-------------------
+
+This package is compatible with Python 3.2+. Each of the external libraries used can be downloaded with pip:
+
+    pip install openpyxl
+    pip install pandas
+
+
+----------------------------
+- Running Script and Tests -
+----------------------------
 
 This is a command line tool that takes the following parameters:
 
@@ -25,7 +38,7 @@ This is a command line tool that takes the following parameters:
 	* existing_sheet: Sheet containing relevant data in this file.
 
 
-Example files can be used as follows:
+Example tests can be run as follows:
 
 	portfolio_updater.py in.xlsx in out.xlsx format
 	* Generates a Stylus portfolio from in.xlsx
@@ -33,11 +46,16 @@ Example files can be used as follows:
 	portfolio_updater.py in.xlsx in out.xlsx join stylusformat.xlsx portfolio
 	* Adds data from in.xlsx to existing portfolio data in stylusformat.xlsx
 
-Eventually, this tool may be used to create and edit portfolios from scratch.
-
 Attached files are as follows:
      - stylusformat.xlsx > Advanced: a Stylus-formatted Advanced Portfolio
      - in.xlsx > in: Additional data to be added to this portfolio. This
        contains new assets as well as an added date for an existing asset.
      - out.xlsx > out: Blank worksheet for output.
 
+---------
+- TO DO -
+---------
+
+TODO: ADD OVERWRITE SHEET FUNCTIONALITY
+TODO: Make the main function way more Pythonic
+TODO: Convert to named variables where it would help readability
